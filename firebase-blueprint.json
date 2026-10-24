@@ -1,0 +1,144 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User account profile and exam preferences",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 256 },
+        "displayName": { "type": "string", "maxLength": 128 },
+        "primaryExamId": { "type": "string", "maxLength": 64 },
+        "selectedExamIds": { "type": "array" },
+        "languagePreference": { "type": "string", "enum": ["en", "hi"] },
+        "dailyStudyTargetMinutes": { "type": "number" },
+        "streakDays": { "type": "number" },
+        "lastActiveDate": { "type": "string", "maxLength": 10 }
+      },
+      "required": ["uid", "primaryExamId", "languagePreference"]
+    },
+    "Subject": {
+      "title": "Subject",
+      "description": "User customized subject within an exam",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "examId": { "type": "string", "maxLength": 64 },
+        "nameEn": { "type": "string", "maxLength": 128 },
+        "nameHi": { "type": "string", "maxLength": 128 },
+        "order": { "type": "number" }
+      },
+      "required": ["id", "examId", "nameEn"]
+    },
+    "Chapter": {
+      "title": "Chapter",
+      "description": "Customizable chapter within a subject with study progress",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "subjectId": { "type": "string", "maxLength": 128 },
+        "examId": { "type": "string", "maxLength": 64 },
+        "nameEn": { "type": "string", "maxLength": 128 },
+        "nameHi": { "type": "string", "maxLength": 128 },
+        "order": { "type": "number" },
+        "selectedForStudy": { "type": "boolean" },
+        "estimatedHours": { "type": "number" },
+        "completedHours": { "type": "number" },
+        "status": { "type": "string", "enum": ["not_started", "in_progress", "completed", "revision_needed"] }
+      },
+      "required": ["id", "subjectId", "examId", "nameEn", "selectedForStudy"]
+    },
+    "MistakeNotebookItem": {
+      "title": "MistakeNotebookItem",
+      "description": "Galti Diary mistake tracking entry for question revision",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "questionId": { "type": "string", "maxLength": 128 },
+        "selectedOptionIndex": { "type": "number" },
+        "mistakeReason": { "type": "string", "enum": ["conceptual_error", "calculation_error", "misread_question", "ran_out_of_time", "guessed"] },
+        "userNotes": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "maxLength": 30 },
+        "resolved": { "type": "boolean" },
+        "reviewCount": { "type": "number" }
+      },
+      "required": ["id", "userId", "questionId", "mistakeReason"]
+    },
+    "TestAttemptResult": {
+      "title": "TestAttemptResult",
+      "description": "Score record and analytics for a mock test session",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "testTitle": { "type": "string", "maxLength": 128 },
+        "examId": { "type": "string", "maxLength": 64 },
+        "completedAt": { "type": "string", "maxLength": 30 },
+        "totalQuestions": { "type": "number" },
+        "attempted": { "type": "number" },
+        "correct": { "type": "number" },
+        "incorrect": { "type": "number" },
+        "skipped": { "type": "number" },
+        "score": { "type": "number" },
+        "maxScore": { "type": "number" },
+        "accuracyPercentage": { "type": "number" },
+        "timeSpentSeconds": { "type": "number" }
+      },
+      "required": ["id", "userId", "testTitle", "examId", "score"]
+    },
+    "PYQQuestion": {
+      "title": "PYQQuestion",
+      "description": "Verified previous year or model exam question",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "examId": { "type": "string", "maxLength": 64 },
+        "year": { "type": "number" },
+        "paperName": { "type": "string", "maxLength": 128 },
+        "shift": { "type": "string", "maxLength": 64 },
+        "subject": { "type": "string", "maxLength": 128 },
+        "chapter": { "type": "string", "maxLength": 128 },
+        "topic": { "type": "string", "maxLength": 128 },
+        "questionEn": { "type": "string", "maxLength": 5000 },
+        "questionHi": { "type": "string", "maxLength": 5000 },
+        "optionsEn": { "type": "array" },
+        "optionsHi": { "type": "array" },
+        "correctOptionIndex": { "type": "number" },
+        "explanationEn": { "type": "string", "maxLength": 5000 },
+        "explanationHi": { "type": "string", "maxLength": 5000 },
+        "verificationStatus": { "type": "string", "enum": ["verified_official", "provisional_key", "community_reviewed", "model_sample"] },
+        "originalSource": { "type": "string", "maxLength": 256 },
+        "officialSourceUrl": { "type": "string", "maxLength": 512 },
+        "rightsStatus": { "type": "string", "enum": ["public_domain_gov", "fair_use_educational", "official_source_link_only"] }
+      },
+      "required": ["id", "examId", "year", "subject", "questionEn", "correctOptionIndex", "verificationStatus", "originalSource"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/profile": {
+      "schema": "UserProfile",
+      "description": "Private profile document for each user"
+    },
+    "/users/{userId}/subjects/{subjectId}": {
+      "schema": "Subject",
+      "description": "User customized subjects list"
+    },
+    "/users/{userId}/chapters/{chapterId}": {
+      "schema": "Chapter",
+      "description": "User chapter progress and selection status"
+    },
+    "/users/{userId}/mistakes/{mistakeId}": {
+      "schema": "MistakeNotebookItem",
+      "description": "Private Galti Diary records"
+    },
+    "/users/{userId}/testAttempts/{attemptId}": {
+      "schema": "TestAttemptResult",
+      "description": "Private mock test records and scores"
+    },
+    "/pyqQuestions/{questionId}": {
+      "schema": "PYQQuestion",
+      "description": "Centrally verified previous year questions collection accessible to all users"
+    }
+  }
+}

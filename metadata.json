@@ -1,0 +1,6 @@
+{
+  "name": "Study Dost AI",
+  "description": "Comprehensive exam prep and PYQ library platform for Indian students with bilingual Hindi & English learning, custom study plans, mock tests, and AI tutoring.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

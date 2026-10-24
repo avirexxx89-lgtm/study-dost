@@ -1,0 +1,99 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default deny everything
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Admins collection: only admins can view or modify
+    match /admins/{adminId} {
+      allow read: if isAdmin();
+      allow write: if false; // Provisioned via server or root console
+    }
+
+    // Centrally managed PYQ Questions:
+    // Public read for authenticated users; write strictly restricted to authorized admins
+    match /pyqQuestions/{questionId} {
+      allow read: if isSignedIn() && isValidId(questionId);
+      allow create, update, delete: if isAdmin() && isValidId(questionId);
+    }
+
+    // Custom exams collection:
+    match /exams/{examId} {
+      allow read: if isSignedIn() && isValidId(examId);
+      allow create: if isSignedIn() && isValidId(examId) && (request.resource.data.createdBy == request.auth.uid || isAdmin());
+      allow update, delete: if isSignedIn() && isValidId(examId) && (resource.data.createdBy == request.auth.uid || isAdmin());
+    }
+
+    // Isolated Private User Data: Strict ABAC boundary
+    // No user can read, list, create, or update another user's private data
+    match /users/{userId} {
+      allow read, write: if isOwner(userId) && isValidId(userId);
+
+      // User Profile sub-document
+      match /profile/{profileDoc} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Customized Subjects
+      match /subjects/{subjectId} {
+        allow read, write: if isOwner(userId) && isValidId(subjectId);
+      }
+
+      // Customized Chapters
+      match /chapters/{chapterId} {
+        allow read, write: if isOwner(userId) && isValidId(chapterId);
+      }
+
+      // Daily Goals
+      match /dailyGoals/{goalId} {
+        allow read, write: if isOwner(userId) && isValidId(goalId);
+      }
+
+      // Revision Spaced Repetition Schedules
+      match /revisionSchedule/{scheduleId} {
+        allow read, write: if isOwner(userId) && isValidId(scheduleId);
+      }
+
+      // Exam Deadlines
+      match /examDeadlines/{deadlineId} {
+        allow read, write: if isOwner(userId) && isValidId(deadlineId);
+      }
+
+      // Personal Mistake Notebook ("Galti Diary")
+      match /mistakes/{mistakeId} {
+        allow read, write: if isOwner(userId) && isValidId(mistakeId);
+      }
+
+      // Mock Test Attempts & Score Results
+      match /testAttempts/{attemptId} {
+        allow read, write: if isOwner(userId) && isValidId(attemptId);
+      }
+
+      // Bookmarked questions
+      match /bookmarks/{bookmarkId} {
+        allow read, write: if isOwner(userId) && isValidId(bookmarkId);
+      }
+    }
+  }
+}
